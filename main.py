@@ -4,9 +4,29 @@ import os
 import pytesseract
 from PIL import Image as PILImage
 import re
+from datetime import datetime
 
 # Configura la ruta al ejecutable de tesseract si es necesario
 pytesseract.pytesseract.tesseract_cmd = r'C:\Users\benna\AppData\Local\Programs\Tesseract-OCR\tesseract.exe'
+
+def is_valid_date(date_str):
+    """ Verifica si la fecha es válida """
+    for fmt in ("%d/%m/%Y", "%d.%m.%Y", "%d-%m-%Y"):
+        try:
+            datetime.strptime(date_str, fmt)
+            return True
+        except ValueError:
+            continue
+    return False
+
+def convert_date_format(date_str):
+    """ Convierte la fecha a formato 'día.mes.año' """
+    for fmt in ("%d/%m/%Y", "%d-%m-%Y", "%d.%m.%Y"):
+        try:
+            return datetime.strptime(date_str, fmt).strftime('%d.%m.%Y')
+        except ValueError:
+            continue
+    return "Not found"
 
 def main(page: Page):
     page.scroll = "auto"
@@ -15,7 +35,7 @@ def main(page: Page):
     id_number = TextField(label="ID Number", width=200)
     surname_txt = TextField(label="Surname", width=200)
     name_txt = TextField(label="Name", width=200)
-    birth_year = TextField(label="Birth Year", width=200)
+    birth_date = TextField(label="Birth Date", width=200)
 
     image_preview = Image(src="", width=250, height=250)
 
@@ -27,7 +47,6 @@ def main(page: Page):
             return
 
         try:
-            
             img_pro = PILImage.open(image_path)
             # Procesa la imagen con pytesseract
             text = pytesseract.image_to_string(img_pro, lang="eng")
@@ -49,7 +68,7 @@ def main(page: Page):
             # Inicializa variables para almacenar los datos extraídos
             surname = ""
             name = ""
-            birth_year_value = ""
+            birth_date_value = ""
             id_number_value = ""
 
             for line in lines:
@@ -58,39 +77,30 @@ def main(page: Page):
                     surname = line.split("Nom:")[-1].strip()
                     surname = re.sub(r'[^\w\s]', '', surname).strip()  # Elimina caracteres no alfanuméricos
 
-
                 elif re.search(r'Pr(?:é|e)nom', line, re.IGNORECASE):
-                    # Verifica que la línea contenga ":" o un espacio, y no contenga "usuel"
                     if (":" in line or " " in line) and "usuel" not in line.lower():
                         if ":" in line:
-                            # Extrae el nombre después del primer ":"
                             name = line.split(":", 1)[1].strip()
                         else:
-                            # Si no hay ":", extrae después del primer espacio
                             name = line.split(" ", 1)[1].strip()
                         
                         name = re.sub(r'\s+', ' ', name).replace(',', '').strip()  # Limpia espacios y comas
                         name = re.sub(r'[^\w\s]', '', name).strip()  # Elimina caracteres no alfanuméricos
-                        # Guarda el nombre en una variable o en el resultado
                         name_txt.value = name
 
-                                            
+                elif "Né(e) le:" in line or "Né(e)le:" in line:
+                    # Extrae la fecha completa de nacimiento
+                    match = re.search(r'\d{2}[./-]\d{2}[./-]\d{4}', line)
+                    if match:
+                        birth_date_candidate = match.group(0)
+                        birth_date_value = convert_date_format(birth_date_candidate)
 
-
-
-                elif  "Né(e} le:" in line:
-                    # Extrae el año de nacimiento
-                    match = re.search(r'\d{2}/\d{2}/(\d{4})', line)
-                    birth_year_value = match.group(1) if match else "Not found"
-                
-                elif  "Né(e}le:" in line:
-                    # Extrae el año de nacimiento
-                    match = re.search(r'\d{2}/\d{2}/(\d{4})', line)
-                    birth_year_value = match.group(1) if match else "Not found"
-                elif re.search(r'\d{2}\.\d{2}\.\d{4}', line):
-                    match = re.search(r'\d{2}\.\d{2}\.(\d{4})', line)
-                    birth_year_value = match.group(1) if match else "Not found"
-              
+                elif re.search(r'\d{2}[./-]\d{2}[./-]\d{4}', line):
+                    # Extrae la fecha completa de nacimiento
+                    match = re.search(r'\d{2}[./-]\d{2}[./-]\d{4}', line)
+                    if match:
+                        birth_date_candidate = match.group(0)
+                        birth_date_value = convert_date_format(birth_date_candidate)
 
                 elif "CARTE" in line.upper():
                     match = re.search(r'\d+[\w\d]*', line)
@@ -100,12 +110,10 @@ def main(page: Page):
                     match = re.search(r'RTE\s*(\d+)', line)
                     id_number_value = match.group(1) if match else "Not found"
 
-
-                  
             # Actualiza las secciones
             sections["Surname"] = surname
             sections["Name"] = name
-            sections["Birth Year"] = birth_year_value
+            sections["Birth Date"] = birth_date_value
             sections["ID Number"] = id_number_value
 
             print("Extracted Sections:")
@@ -115,7 +123,7 @@ def main(page: Page):
             id_number.value = sections.get("ID Number", "Not found")
             surname_txt.value = sections.get("Surname", "Not found")
             name_txt.value = sections.get("Name", "Not found")
-            birth_year.value = sections.get("Birth Year", "Not found")
+            birth_date.value = sections.get("Birth Date", "Not found")
 
             # Actualiza la vista previa de la imagen
             image_preview.src = image_path
@@ -136,7 +144,7 @@ def main(page: Page):
             id_number,
             surname_txt,
             name_txt,
-            birth_year
+            birth_date
         ])
     )
 
