@@ -25,5 +25,17 @@ The ID Document Information Recognizer is a Python-based application designed to
 
 1. **Clone the Repository**:
    ```sh
-   git clone <repository-url>
-   cd <repository-directory>
+   git clone https://github.com/AmineBennani7/id-recognizer.git
+
+2. **Install Dependencies**:
+   ```sh
+   pip install -r requirements.txt
+
+3. **Run the app**:
+   ```sh
+   python main.py
+
+   
+   
+
+
