@@ -38,7 +38,12 @@ Here’s a brief demonstration of how the application works:
    ```sh
    pip install -r requirements.txt
 
-3. **Run the app**:
+3. **Download and Install Tesseract:**:
+   After installation, configure the path to the Tesseract executable in the code. Modify the following line in main.py to match your Tesseract installation path:
+   ```python
+      pytesseract.pytesseract.tesseract_cmd = r'C:\Users\benna\AppData\Local\Programs\Tesseract-OCR\tesseract.exe'
+
+4. **Run the app**:
    ```sh
    python main.py
 
