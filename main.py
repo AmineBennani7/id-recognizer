@@ -28,6 +28,16 @@ def convert_date_format(date_str):
             continue
     return "Not found"
 
+def convert_date_format2(date_str):
+    """ Convierte la fecha a formato 'día.mes.año' """
+    # Intentar convertir el formato de UK a 'día.mes.año'
+    try:
+        return datetime.strptime(date_str, "%d %b %Y").strftime('%d.%m.%Y')
+    except ValueError:
+        return "Not found"
+
+
+
 def main(page: Page):
     page.scroll = "auto"
 
@@ -71,8 +81,11 @@ def main(page: Page):
             birth_date_value = ""
             id_number_value = ""
 
-            for line in lines:
+            for i, line in enumerate(lines):
                 line = line.strip()
+
+    ############################################FRENCH ID #####################################################################################
+
                 if "Nom:" in line:
                     surname = line.split("Nom:")[-1].strip()
                     surname = re.sub(r'[^\w\s]', '', surname).strip()  # Elimina caracteres no alfanuméricos
@@ -109,6 +122,31 @@ def main(page: Page):
                 elif "RTE" in line:
                     match = re.search(r'RTE\s*(\d+)', line)
                     id_number_value = match.group(1) if match else "Not found"
+                
+
+              ##############################   UK ID ####################################################################################
+
+
+                elif "Name" in line:
+                    name_index = lines.index(line)
+                    if name_index + 1 < len(lines):
+                        name = lines[name_index + 1].strip()
+                    if name_index + 2 < len(lines):
+                        surname = lines[name_index + 2].strip()
+                        
+                elif "DoB" in line:
+                    # Busca una fecha en el formato de UK (por ejemplo, "09 Nov 2000")
+                    if i + 1 < len(lines):
+                        next_line = lines[i + 1].strip()
+                        match = re.search(r'\d{2} [A-Za-z]{3} \d{4}', next_line)
+                        if match:
+                            birth_date_candidate = match.group(0)
+                            birth_date_value = convert_date_format2(birth_date_candidate)
+            #ID NUMBER
+                match = re.search(r'\b\d{4} \d{4} \d{4} \d{4}\b', text)
+                print(match)
+                if match:
+                    id_number_value = match.group(0).replace(" ", "")
 
             # Actualiza las secciones
             sections["Surname"] = surname
