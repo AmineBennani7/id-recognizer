@@ -21,6 +21,13 @@ The ID Document Information Recognizer is a Python-based application designed to
    - ID Number
 4. **Display**: Show the extracted information in the user interface and save the results in a text file.
 
+
+## Example
+
+Here’s a brief demonstration of how the application works:
+
+![Application Demo](gif/gif.gif)
+
 ## Installation
 
 1. **Clone the Repository**:
